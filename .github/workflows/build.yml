@@ -44,13 +44,16 @@ jobs:
           
       - name: Initialize & Shallow Sync Infinity-X Source
         run: |
+          sudo rm -rf /opt/hostedtoolcache/*
+          df -h /
           mkdir -p ~/rom && cd ~/rom
-          repo init --depth=1 --no-repo-verify --git-lfs -u https://github.com/ProjectInfinity-X/manifest -b 16 -g default,-mips,-darwin,-x86,-notdefault
+          repo init --depth=1 --no-repo-verify --git-lfs -u https://github.com/ProjectInfinity-X/manifest -b 16 -g default,-mips,-darwin,-notdefault
           git clone https://github.com/lunarshade141/local_manifests.git .repo/local_manifests
           repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j6
+          echo "=== Wiping .repo to reclaim disk space ==="
           rm -rf .repo
-          df -h
-
+          df -h /
+          
       - name: Compile Infinity-X (Vanilla)
         working-directory: /home/runner/rom
         run: |
