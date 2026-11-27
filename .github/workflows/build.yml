@@ -39,38 +39,13 @@ jobs:
           check_repo "AfterLifePrjkt13-Dev/vendor_xiaomi_onclite" "14"
           check_repo "AfterLifePrjkt13-Dev/kernel_xiaomi_onclite" "14"
 
+      
       - name: Verify AfterLifeOS manifest
         run: |
           git ls-remote --exit-code \
             --heads https://github.com/AfterLifeOS/android_manifest.git \
             refs/heads/14
 
-          - name: Maximize Build Storage
-          uses: easimon/maximize-build-space@master
-          with:
-          root-reserve-mb: 10240
-          swap-size-mb: 4096
-          remove-dotnet: true
-          remove-haskell: true
-          remove-codeql: true
-          remove-docker-images: true
-
-      - name: Storage Audit
-        shell: bash
-        run: |
-          echo "===== FILESYSTEM ====="
-          df -h /
-
-          echo "===== MEMORY ====="
-          free -h
-
-          echo "===== LARGEST DIRECTORIES ====="
-          sudo du -xhd1 /usr /opt /home /tmp 2>/dev/null | sort -h
-
-          echo "===== AVAILABLE SPACE ====="
-          df -BG /
-
-   
       - name: Maximize Build Storage
         uses: easimon/maximize-build-space@master
         with:
