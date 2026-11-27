@@ -42,27 +42,23 @@ jobs:
           df -h
           sudo du -sh /* 2>/dev/null | sort -h | tail -n 15
           
-      - name: Initialize & Staged Sync Infinity-X Source
+      - name: Initialize & Shallow Sync Infinity-X Source
         run: |
-          sudo rm -rf /opt/hostedtoolcache/*
+          mkdir -p /tmp/runner_diag
+          rm -rf /home/runner/actions-runner/cached/2.338.2/_diag
+          ln -s /tmp/runner_diag /home/runner/actions-runner/cached/2.338.2/_diag
+
           mkdir -p ~/rom && cd ~/rom
           repo init --depth=1 --no-repo-verify --git-lfs -u https://github.com/ProjectInfinity-X/manifest -b 16 -g default,-mips,-darwin,-notdefault
           git clone https://github.com/lunarshade141/local_manifests.git .repo/local_manifests
 
-          # 1. Sync everything except the heaviest prebuilt first
           repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j4 \
-            $(repo list -p | grep -v '^platform/prebuilts/clang/host/linux-x86$')
-          df -h /
-
-          # 2. Sync clang host prebuilt separately
-          repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j2 \
-            platform/prebuilts/clang/host/linux-x86
+            $(repo list -p | grep -v -E '^(platform/prebuilts/rust|platform/prebuilts/clang/host/linux-x86)$')
 
           echo "=== Wiping .repo to reclaim disk space ==="
           rm -rf .repo
           df -h /    
       
-          
       - name: Compile Infinity-X (Vanilla)
         working-directory: /home/runner/rom
         run: |
