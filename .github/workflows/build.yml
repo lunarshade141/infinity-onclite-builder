@@ -70,6 +70,28 @@ jobs:
 
           echo "===== AVAILABLE SPACE ====="
           df -BG /
+          
+      - name: Inspect Build Volume Backing
+        shell: bash
+        run: |
+          echo "===== LOOP DEVICES ====="
+          sudo losetup -a
+
+          echo "===== MOUNT INFORMATION ====="
+          findmnt -T "$GITHUB_WORKSPACE"
+
+          echo "===== EXACT ROOT SPACE ====="
+          df -B1 /
+
+          echo "===== EXACT BUILD SPACE ====="
+          df -B1 "$GITHUB_WORKSPACE"
+
+          echo "===== LVM PHYSICAL VOLUMES ====="
+          sudo pvs -o pv_name,pv_size,pv_used,pv_free
+
+          echo "===== LVM LOGICAL VOLUMES ====="
+          sudo lvs -a -o lv_name,lv_size,devices
+
 
       - name: Verify Build Volume
         shell: bash
