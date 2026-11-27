@@ -37,19 +37,24 @@ jobs:
           git clone https://github.com/lunarshade141/local_manifests.git .repo/local_manifests
 
           echo "=== Batch 1: Prebuilts ==="
-          repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j4 prebuilts/
+          PREBUILTS=$(repo list -p | grep -E '^(prebuilts/|platform/prebuilts/)')
+          if [ -n "$PREBUILTS" ]; then
+            repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j4 $PREBUILTS
+          fi
           rm -rf .repo/projects/* .repo/project-objects/*
           df -h /
 
-          echo "=== Batch 2: Core Frameworks, Vendor, Device & Kernel ==="
-          repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j4 \
-            art bionic bootable build cts development device external frameworks hardware kernel libcore packages system toolchain tools vendor
+          echo "=== Batch 2: Non-Prebuilts ==="
+          NON_PREBUILTS=$(repo list -p | grep -v -E '^(prebuilts/|platform/prebuilts/)')
+          if [ -n "$NON_PREBUILTS" ]; then
+            repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j4 $NON_PREBUILTS
+          fi
           rm -rf .repo/projects/* .repo/project-objects/*
           df -h /
 
-          echo "=== Batch 3: Remaining Top-Level Repos ==="
+          echo "=== Batch 3: Final Catch-All & Cleanup ==="
           repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j4
-          rm -rf .repo prebuilts/qemu-kernel prebuilts/ndk prebuilts/maven_repo
+          rm -rf .repo prebuilts/qemu-kernel prebuilts/ndk prebuilts/maven_repo platform/prebuilts/qemu-kernel platform/prebuilts/ndk
           df -h /
 
       - name: Compress Source into 1.9GB Chunks
