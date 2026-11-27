@@ -30,36 +30,33 @@ jobs:
           git config --global user.name "lunarshade141"
           git config --global user.email "lunarshade141@users.noreply.github.com"
           
-      - name: 3-Batch Shallow Sync (Zero Disk Spike)
+      - name: Chunked Shallow Sync (40 Projects Per Batch)
         run: |
           mkdir -p ~/rom && cd ~/rom
           repo init --depth=1 --no-repo-verify --git-lfs -u https://github.com/ProjectInfinity-X/manifest -b 16 -g default,-mips,-darwin,-notdefault
           git clone https://github.com/lunarshade141/local_manifests.git .repo/local_manifests
 
-          echo "=== Manifest Prebuilt Paths ==="
-          repo list -p | grep -E 'prebuilts' || true
+          ALL_PATHS=$(repo list -p)
+          TOTAL=$(echo "$ALL_PATHS" | wc -l)
+          echo "Total projects in manifest: $TOTAL"
 
-          echo "=== Batch 1: Sync Prebuilts One by One ==="
-          for p in $(repo list -p | grep -E '^(prebuilts/|platform/prebuilts/)'); do
-            echo "--- Syncing: $p ---"
-            repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j2 "$p" || echo "FAILED on $p"
+          CHUNK_SIZE=40
+          START=1
+          while [ "$START" -le "$TOTAL" ]; do
+            END=$((START + CHUNK_SIZE - 1))
+            echo "=== Syncing projects $START to $END of $TOTAL ==="
+            BATCH=$(echo "$ALL_PATHS" | sed -n "${START},${END}p")
+            repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j4 $BATCH || true
+            rm -rf .repo/projects/* .repo/project-objects/*
             df -h /
+            START=$((END + 1))
           done
-          rm -rf .repo/projects/* .repo/project-objects/*
-          df -h /
 
-          echo "=== Batch 2: Non-Prebuilts ==="
-          for p in $(repo list -p | grep -v -E '^(prebuilts/|platform/prebuilts/)'); do
-            repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j4 "$p" || echo "FAILED on $p"
-          done
-          rm -rf .repo/projects/* .repo/project-objects/*
-          df -h /
-
-          echo "=== Batch 3: Final Catch-All & Cleanup ==="
-          repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j4 || true
           rm -rf .repo prebuilts/qemu-kernel prebuilts/ndk prebuilts/maven_repo platform/prebuilts/qemu-kernel platform/prebuilts/ndk
+          echo "=== Final size of ~/rom ==="
+          du -sh ~/rom
           df -h /
-      
+          
       - name: Compress Source into 1.9GB Chunks
         run: |
           mkdir -p ~/chunks
