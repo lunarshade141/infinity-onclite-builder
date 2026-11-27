@@ -70,3 +70,19 @@ jobs:
 
           echo "===== AVAILABLE SPACE ====="
           df -BG /
+
+      - name: Verify Build Volume
+        shell: bash
+        run: |
+          echo "===== CURRENT DIRECTORY ====="
+          pwd
+
+          echo "===== WORKSPACE STORAGE ====="
+          df -h "$GITHUB_WORKSPACE"
+
+          echo "===== WORKSPACE WRITABLE ====="
+          touch "$GITHUB_WORKSPACE/testfile"
+          rm "$GITHUB_WORKSPACE/testfile"
+
+          echo "===== WORKSPACE CAPACITY ====="
+          df -BG "$GITHUB_WORKSPACE"
